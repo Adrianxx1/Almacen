@@ -28,7 +28,7 @@ public class ProductoServiceImpl implements ProductoService {
     @Transactional(readOnly = true)
     public List<ProductoResponse> listar(
             String nombre, String categoria,
-            BigDecimal precioMoni, BigDecimal precioMax
+            BigDecimal precioMin, BigDecimal precioMax
     ) {
         log.info("Listando todos los productos");
         return productoRepository.findAll().stream()
