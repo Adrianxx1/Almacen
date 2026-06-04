@@ -16,7 +16,7 @@ public enum EstadoVenta {
     private final Long codigo;
 
     public static EstadoVenta obtenerCategoriaPorDescripcion(String descripcion) {
-        StringCustomUtils.validarNoVacio(descripcion, "La dexcripcion es requerida");
+        StringCustomUtils.validarNoVacio(descripcion, "La descripcion es requerida");
         String descripcionNormalizada = StringCustomUtils.quitarAcentos(descripcion.trim());
         for (EstadoVenta estadoVenta : values()) {
             if (StringCustomUtils.quitarAcentos(estadoVenta.descripcion).equalsIgnoreCase(descripcionNormalizada))
@@ -28,8 +28,10 @@ public enum EstadoVenta {
 
     public static EstadoVenta obtenerEstadoVentaPorCodigo(Long codigo) {
         for (EstadoVenta estadoVenta : values()) {
-            return estadoVenta;
+            if (estadoVenta.codigo.equals(codigo))
+                return estadoVenta;
         }
+        throw new RecursoNoEncontrado("No existe un estado de venta con el codigo: " + codigo);
 
-        throw new RecursoNoEncontrado("No existe un estado de venta con el codigo" +codigo);
+
     } }
