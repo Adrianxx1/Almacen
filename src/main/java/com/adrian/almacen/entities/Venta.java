@@ -4,12 +4,13 @@ import com.adrian.almacen.enums.EstadoVenta;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table
+@Table(name = "VENTAS")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -32,14 +33,20 @@ public class Venta {
     private Sucursal sucursal;
 
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL,
-    orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<DetalleVenta> detalleVenta = new ArrayList<>();
+            orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<DetalleVenta> detalleVenta;
+
+    public List<DetalleVenta> getDetalleVenta() {
+        if (this.detalleVenta == null)
+            this.detalleVenta = new ArrayList<>();
+        return this.detalleVenta;
+    }
 
     public void agregarDetalle(DetalleVenta detalleVenta){
         if (detalleVenta == null)
             throw new IllegalArgumentException("El detalle es requerido");
 
-        this.detalleVenta.add(detalleVenta);
+        this.getDetalleVenta().add(detalleVenta);
         detalleVenta.setVenta(this);
     }
 
@@ -47,5 +54,11 @@ public class Venta {
         if (this.estadoVenta == EstadoVenta.CANCELADA)
             throw new IllegalArgumentException("La venta ya está cancelada");
         this.estadoVenta = EstadoVenta.CANCELADA;
+    }
+
+    public BigDecimal getTotal() {
+        return getDetalleVenta().stream()
+                .map(detalle -> detalle.getPrecioProducto().multiply(BigDecimal.valueOf(detalle.getCantidadProducto())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
