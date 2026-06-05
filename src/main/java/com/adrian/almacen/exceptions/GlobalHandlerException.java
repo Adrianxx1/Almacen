@@ -78,4 +78,10 @@ public class GlobalHandlerException {
                 .body(new CustomErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "Error interno del servidor. Por favor, contacte al administrador."));
     }
+    @ExceptionHandler(OperacionNoPermitida.class)
+    public ResponseEntity<CustomErrorResponse> handleOperacionNoPermitida(OperacionNoPermitida e) {
+        log.warn("Operación no permitida: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CustomErrorResponse(HttpStatus.CONFLICT.value(), e.getMessage()));
+    }
 }
