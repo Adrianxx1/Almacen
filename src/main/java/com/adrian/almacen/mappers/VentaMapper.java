@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -22,7 +22,7 @@ public class VentaMapper {
         if (request == null) return null;
 
         return Venta.builder()
-                .fecha(LocalDate.now())
+                .fecha(LocalDateTime.now())
                 .estadoVenta(EstadoVenta.REGISTRADA)
                 .sucursal(sucursal)
                 .build();
