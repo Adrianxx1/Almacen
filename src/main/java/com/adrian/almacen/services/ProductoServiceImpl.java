@@ -36,7 +36,16 @@ public class ProductoServiceImpl implements ProductoService {
     ) {
         log.info("Listando todos los productos");
         return productoRepository.findAll().stream()
-                .map(productoMapper::entidadAResponse).toList();
+                .filter(p -> nombre == null ||
+                        p.getNombre().toLowerCase().contains(nombre.toLowerCase()))
+                .filter(p -> categoria == null ||
+                        p.getCategoria().getDescripcion().equalsIgnoreCase(categoria))
+                .filter(p -> precioMin == null ||
+                        p.getPrecio().compareTo(precioMin) >= 0)
+                .filter(p -> precioMax == null ||
+                        p.getPrecio().compareTo(precioMax) <= 0)
+                .map(productoMapper::entidadAResponse)
+                .toList();
     }
 
     @Override
