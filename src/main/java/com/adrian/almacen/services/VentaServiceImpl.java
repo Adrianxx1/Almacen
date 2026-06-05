@@ -1,10 +1,10 @@
 package com.adrian.almacen.services;
 
-import com.adrian.almacen.dto.productos.ProductoResponse;
-import com.adrian.almacen.dto.sucursales.SucursalResponse;
-import com.adrian.almacen.dto.ventas.DetalleVentaResponse;
+
 import com.adrian.almacen.dto.ventas.VentaRequest;
+import com.adrian.almacen.entities.DetalleVenta;
 import com.adrian.almacen.entities.Producto;
+import com.adrian.almacen.entities.Sucursal;
 import com.adrian.almacen.entities.Venta;
 import com.adrian.almacen.enums.EstadoVenta;
 import com.adrian.almacen.dto.ventas.VentaResponse;
@@ -64,11 +64,46 @@ public class VentaServiceImpl implements VentaService {
 
     @Override
     public VentaResponse registrar(VentaRequest request) {
-        return null;
+        log.info("Registrando nueva venta...");
+        Sucursal sucursal = sucursalRepository.findById(request.idSucursal())
+                .orElseThrow(() -> new RecursoNoEncontrado(
+                        "Sucursal no encontrada con id: " + request.idSucursal()));
+
+        Venta venta = ventaMapper.requestAEntidad(request, sucursal);
+
+        request.productos().forEach(detalle -> {
+
+
+            Producto producto = productoRepository.findById(detalle.idProducto())
+                    .orElseThrow(() -> new RecursoNoEncontrado(
+                            "Producto no encontrado con id: " + detalle.idProducto()));
+
+
+            producto.descontarCantidad(detalle.cantidadProducto());
+            DetalleVenta detalleVenta = DetalleVenta.builder()
+                    .producto(producto)
+                    .cantidadProducto(detalle.cantidadProducto())
+                    .precioProducto(producto.getPrecio())
+                    .build();
+            venta.agregarDetalle(detalleVenta);
+        });
+        Venta ventaGuardada = ventaRepository.save(venta);
+        log.info("Venta registrada con id: {}", ventaGuardada.getId());
+        return ventaMapper.entidadAResponse(ventaGuardada);
     }
     @Override
     public void cancelar(Long id) {
+        Venta venta = obtenerVentaOException(id);
+        log.info("Cancelando venta con id: {}", id);
+        venta.cancel();
+        venta.getDetalleVenta().forEach(detalle -> {
+            detalle.getProducto().aumentarCantidad(detalle.getCantidadProducto());
+        });
+        log.info("Venta con id {} cancelada", id);
+    }
+
+
+
 
     }
 
-}
