@@ -17,6 +17,7 @@ public class DetalleVenta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID_DETALLE_VENTA")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

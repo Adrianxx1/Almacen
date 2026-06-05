@@ -4,9 +4,12 @@ import com.adrian.almacen.dto.productos.ProductoRequest;
 import com.adrian.almacen.dto.productos.ProductoResponse;
 import com.adrian.almacen.entities.Producto;
 import com.adrian.almacen.enums.Categoria;
+import com.adrian.almacen.enums.EstadoVenta;
+import com.adrian.almacen.exceptions.OperacionNoPermitida;
 import com.adrian.almacen.exceptions.RecursoNoEncontrado;
 import com.adrian.almacen.mappers.ProductoMapper;
 import com.adrian.almacen.repositories.ProductoRepository;
+import com.adrian.almacen.repositories.VentaRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
     private final ProductoMapper productoMapper;
+    private final VentaRepository ventaRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -32,7 +36,16 @@ public class ProductoServiceImpl implements ProductoService {
     ) {
         log.info("Listando todos los productos");
         return productoRepository.findAll().stream()
-                .map(productoMapper::entidadAResponse).toList();
+                .filter(p -> nombre == null ||
+                        p.getNombre().toLowerCase().contains(nombre.toLowerCase()))
+                .filter(p -> categoria == null ||
+                        p.getCategoria().getDescripcion().equalsIgnoreCase(categoria))
+                .filter(p -> precioMin == null ||
+                        p.getPrecio().compareTo(precioMin) >= 0)
+                .filter(p -> precioMax == null ||
+                        p.getPrecio().compareTo(precioMax) <= 0)
+                .map(productoMapper::entidadAResponse)
+                .toList();
     }
 
     @Override
@@ -65,17 +78,18 @@ public class ProductoServiceImpl implements ProductoService {
         return productoMapper.entidadAResponse(producto);
     }
 
-    @Override
-    public void eliminar(Long id) {
-        Producto producto = obtenerProductoOException(id);
-        log.info("Eliminando producto con id: {}", id);
-        productoRepository.delete(producto);
-        log.info("Producto con id {} eliminado", id);
-    }
-
     private Producto obtenerProductoOException(Long id) {
         log.info("Buscando producto con id: {}", id);
         return productoRepository.findById(id).orElseThrow(() ->
                 new RecursoNoEncontrado("Producto no encontrado con id: " + id));
+    }
+    @Override
+    public void eliminar(Long id) {
+        Producto producto = obtenerProductoOException(id);
+        if (ventaRepository.existsByDetalleVentaProductoIdAndEstadoVenta(id, EstadoVenta.REGISTRADA))
+            throw new OperacionNoPermitida("No se puede eliminar el producto con id: " + id + " porque tiene ventas registradas");
+        log.info("Eliminando producto con id: {}", id);
+        productoRepository.delete(producto);
+        log.info("Producto con id {} eliminado", id);
     }
 }

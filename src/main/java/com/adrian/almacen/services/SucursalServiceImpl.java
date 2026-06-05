@@ -3,9 +3,12 @@ package com.adrian.almacen.services;
 import com.adrian.almacen.dto.sucursales.SucursalRequest;
 import com.adrian.almacen.dto.sucursales.SucursalResponse;
 import com.adrian.almacen.entities.Sucursal;
+import com.adrian.almacen.enums.EstadoVenta;
+import com.adrian.almacen.exceptions.OperacionNoPermitida;
 import com.adrian.almacen.exceptions.RecursoNoEncontrado;
 import com.adrian.almacen.mappers.SucursalMapper;
 import com.adrian.almacen.repositories.SucursalRepository;
+import com.adrian.almacen.repositories.VentaRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ public class SucursalServiceImpl implements SucursalService {
 
     private final SucursalRepository sucursalRepository;
     private  final SucursalMapper sucursalMapper;
+    private final VentaRepository ventaRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -62,11 +66,11 @@ public class SucursalServiceImpl implements SucursalService {
     @Override
     public void eliminar(Long id) {
         Sucursal sucursal = obtenerSucursalOException(id);
+        if (ventaRepository.existsBySucursalIdAndEstadoVenta(id, EstadoVenta.REGISTRADA))
+            throw new OperacionNoPermitida("No se puede eliminar la sucursal con id: " + id + " porque tiene ventas registradas");
         log.info("Eliminando sucursal con id: {}", id);
-
         sucursalRepository.delete(sucursal);
-        log.info("Sucursal con id {}", id);
-
+        log.info("Sucursal con id {} eliminada", id);
     }
 
     private Sucursal obtenerSucursalOException(Long id){
